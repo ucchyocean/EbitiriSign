@@ -1,0 +1,10 @@
+name: EbitiriSign
+main: com.github.ucchyocean.es.EbitiriSign
+version: 0.1.0
+authors: [ucchy]
+load: startup
+description: My name is EbitiriWing!
+permissions:
+  ebitirisign.set:
+    description: Ebitiri Sign set permission.
+    default: op
