@@ -1,0 +1,13 @@
+# Ebitiri Sign Plugin 1.0.1
+# @author     ucchy
+# @license    EPL (Ebitiri Public License)
+# @copyright  Copyright ucchy 2013
+
+specialEventPercent: 10
+specialEvents:
+  colorEvent: 25
+  bigEvent: 20
+  moneyEvent: 15
+  wordsEvent: 30
+  thunderEvent: 5
+  explodeEvent: 5

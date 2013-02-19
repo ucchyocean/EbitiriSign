@@ -10,6 +10,7 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Sign;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -30,6 +31,8 @@ public class EbitiriSign extends JavaPlugin implements Listener {
     private static final String[][] EBITIRI_WORDS = {
         {ChatColor.GRAY + "・。 ・ ＜ piiiii"},
         {ChatColor.GRAY + "・。 ・ｂ"},
+        {ChatColor.GRAY + "ｄ・。 ・ｂ"},
+        {ChatColor.GRAY + "；。 ；"},
         {ChatColor.GOLD + "(*o ω n *) 三 (* o ω n*)", ChatColor.GRAY + "・。 ・ｐ funckin'..."},
     };
 
@@ -43,6 +46,14 @@ public class EbitiriSign extends JavaPlugin implements Listener {
 
     private static Economy econ;
 
+    private int specialEventPercent;
+    private int colorEvent;
+    private int bigEvent;
+    private int moneyEvent;
+    private int wordsEvent;
+    private int thunderEvent;
+    private int explodeEvent;
+
     /**
      * @see org.bukkit.plugin.java.JavaPlugin#onLoad()
      */
@@ -50,6 +61,8 @@ public class EbitiriSign extends JavaPlugin implements Listener {
     public void onEnable() {
         getLogger().info("[・。・]様のご来店です！");
         getServer().getPluginManager().registerEvents(this, this);
+
+        reloadConfigFile();
 
         Plugin vault = Bukkit.getServer().getPluginManager().getPlugin("Vault");
         if ( vault != null ) {
@@ -74,14 +87,31 @@ public class EbitiriSign extends JavaPlugin implements Listener {
 
             if ( !player.hasPermission("ebitirisign.set") ) {
                 // パーミッションを持っていない。
-                player.getWorld().strikeLightning(player.getLocation());
+                //player.getWorld().strikeLightning(player.getLocation());
                 player.sendMessage(ChatColor.RED + EBITIRI + "＃ You don't have permission \"ebitirisign.set\"!!!");
+                event.setLine(0, "");
+                return;
             }
 
             player.sendMessage(ChatColor.GRAY + EBITIRI);
             event.setLine(2, EBITIRI);
         }
+    }
 
+    private void reloadConfigFile() {
+
+        getConfig().options().copyDefaults(true);
+        saveConfig();
+        reloadConfig();
+        FileConfiguration config = getConfig();
+
+        specialEventPercent = config.getInt("specialEventPercent", SPECIAL_EVENT_CHANCE);
+        colorEvent = config.getInt("specialEvents.colorEvent", COLOR_CHANCE);
+        bigEvent = config.getInt("specialEvents.bigEvent", BIG_CHANCE);
+        moneyEvent = config.getInt("specialEvents.moneyEvent", MONEY_CHANCE);
+        wordsEvent = config.getInt("specialEvents.wordsEvent", WORDS_CHANCE);
+        thunderEvent = config.getInt("specialEvents.thunderEvent", THUNDER_CHANCE);
+        explodeEvent = config.getInt("specialEvents.explodeEvent", EXPLODE_CHANCE);
     }
 
     @EventHandler
@@ -92,85 +122,87 @@ public class EbitiriSign extends JavaPlugin implements Listener {
 
             Sign sign = (Sign)event.getClickedBlock().getState();
 
-            if (sign.getLine(0).equals(SIGN_FIRST)) {
+            if (!sign.getLine(0).equalsIgnoreCase(SIGN_FIRST)) {
+                return;
+            }
 
-                Random rand = new Random();
-                int specialChance = rand.nextInt(100);
+            Random rand = new Random();
+            int specialChance = rand.nextInt(100);
 
-                if ( specialChance < SPECIAL_EVENT_CHANCE ) {
-                    // スペシャルイベント実行
+            if ( specialChance < specialEventPercent ) {
+                // スペシャルイベント実行
 
-                    int kindChance = rand.nextInt(100);
+                int kindChance = rand.nextInt(getTotalOfSpecialEvent());
 
-                    if ( kindChance < COLOR_CHANCE ) {
-                        // 色つきエビチリ
-                        setEbiToRandomPos(sign, true);
-                        return;
-                    }
-                    kindChance -= COLOR_CHANCE;
-
-                    if ( kindChance < BIG_CHANCE ) {
-                        // 大きなエビチリ
-                        setBigEbiToRandomPos(sign);
-                        return;
-                    }
-                    kindChance -= BIG_CHANCE;
-
-                    if ( kindChance < MONEY_CHANCE ) {
-                        // お金をくれるエビチリ
-                        setEbiToRandomPos(sign, false);
-                        if ( econ != null ) {
-                            Player player = event.getPlayer();
-                            econ.depositPlayer(player.getName(), 100.0).transactionSuccess();
-                            String unit = econ.currencyNamePlural();
-                            player.sendMessage(ChatColor.RED + EBITIRI + " ＜ 100" + unit + "あげよう。");
-                        }
-                        return;
-                    }
-                    kindChance -= MONEY_CHANCE;
-
-                    if ( kindChance < WORDS_CHANCE ) {
-                        // お言葉をくれるエビチリ
-                        setEbiToRandomPos(sign, false);
-                        int wordIndex = rand.nextInt(EBITIRI_WORDS.length);
-                        event.getPlayer().sendMessage(EBITIRI_WORDS[wordIndex]);
-                        return;
-                    }
-                    kindChance -= WORDS_CHANCE;
-
-                    if ( kindChance < THUNDER_CHANCE ) {
-                        // 雷を落とすエビチリ
-                        setEbiToRandomPos(sign, false);
-                        Player player = event.getPlayer();
-                        player.getWorld().strikeLightning(player.getLocation());
-                        player.sendMessage(ChatColor.RED + EBITIRI + "＃");
-                        return;
-                    }
-                    kindChance -= THUNDER_CHANCE;
-
-                    if ( kindChance < EXPLODE_CHANCE ) {
-                        // 爆発するエビチリ
-                        setEbiToRandomPos(sign, false);
-                        Player player = event.getPlayer();
-                        player.getWorld().createExplosion(player.getLocation(), 4F);
-                        player.sendMessage(ChatColor.RED + EBITIRI + "＃");
-                        return;
-                    }
-                    kindChance -= EXPLODE_CHANCE;
-
-                    // TODO: 他のスペシャルイベントをここに追加
-
-                    setEbiToRandomPos(sign, false);
-
-                    return;
-
-                } else {
-                    // 通常イベント
-
-                    setEbiToRandomPos(sign, false);
+                if ( kindChance < colorEvent ) {
+                    // 色つきエビチリ
+                    setEbiToRandomPos(sign, true);
                     return;
                 }
+                kindChance -= colorEvent;
+
+                if ( kindChance < bigEvent ) {
+                    // 大きなエビチリ
+                    setBigEbiToRandomPos(sign);
+                    return;
+                }
+                kindChance -= bigEvent;
+
+                if ( kindChance < moneyEvent ) {
+                    // お金をくれるエビチリ
+                    setEbiToRandomPos(sign, false);
+                    if ( econ != null ) {
+                        Player player = event.getPlayer();
+                        econ.depositPlayer(player.getName(), 100.0).transactionSuccess();
+                        String unit = econ.currencyNamePlural();
+                        player.sendMessage(ChatColor.RED + EBITIRI + " ＜ 100" + unit + "あげよう。");
+                    }
+                    return;
+                }
+                kindChance -= moneyEvent;
+
+                if ( kindChance < wordsEvent ) {
+                    // お言葉をくれるエビチリ
+                    setEbiToRandomPos(sign, false);
+                    int wordIndex = rand.nextInt(EBITIRI_WORDS.length);
+                    event.getPlayer().sendMessage(EBITIRI_WORDS[wordIndex]);
+                    return;
+                }
+                kindChance -= wordsEvent;
+
+                if ( kindChance < thunderEvent ) {
+                    // 雷を落とすエビチリ
+                    setEbiToRandomPos(sign, false);
+                    Player player = event.getPlayer();
+                    player.getWorld().strikeLightning(player.getLocation());
+                    player.sendMessage(ChatColor.RED + EBITIRI + "＃");
+                    return;
+                }
+                kindChance -= thunderEvent;
+
+                if ( kindChance < explodeEvent ) {
+                    // 爆発するエビチリ
+                    setEbiToRandomPos(sign, false);
+                    Player player = event.getPlayer();
+                    player.getWorld().createExplosion(player.getLocation(), 4F);
+                    player.sendMessage(ChatColor.RED + EBITIRI + "＃");
+                    return;
+                }
+                kindChance -= explodeEvent;
+
+                // TODO: 他のスペシャルイベントをここに追加
+
+                setEbiToRandomPos(sign, false);
+
+                return;
+
+            } else {
+                // 通常イベント
+
+                setEbiToRandomPos(sign, false);
+                return;
             }
+
         }
     }
 
@@ -239,5 +271,17 @@ public class EbitiriSign extends JavaPlugin implements Listener {
         sign.setLine(line+1, buf2.toString());
 
         sign.update();
+    }
+
+    private int getTotalOfSpecialEvent() {
+
+        int total = 0;
+        total += colorEvent;
+        total += bigEvent;
+        total += moneyEvent;
+        total += wordsEvent;
+        total += thunderEvent;
+        total += explodeEvent;
+        return total;
     }
 }
