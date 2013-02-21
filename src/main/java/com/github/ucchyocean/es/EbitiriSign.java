@@ -3,6 +3,7 @@
  */
 package com.github.ucchyocean.es;
 
+import java.io.File;
 import java.util.Random;
 
 import net.milkbowl.vault.economy.Economy;
@@ -33,7 +34,7 @@ public class EbitiriSign extends JavaPlugin implements Listener {
         {ChatColor.GRAY + "・。 ・ｂ"},
         {ChatColor.GRAY + "ｄ・。 ・ｂ"},
         {ChatColor.GRAY + "；。 ；"},
-        {ChatColor.GOLD + "(*o ω n *) 三 (* o ω n*)", ChatColor.GRAY + "・。 ・ｐ funckin'..."},
+        {ChatColor.GOLD + "(*o ω n *) 三 (* o ω n*)", ChatColor.GRAY + "・。 ・ｐ fuckin'..."},
     };
 
     private static final int SPECIAL_EVENT_CHANCE = 10;
@@ -100,8 +101,12 @@ public class EbitiriSign extends JavaPlugin implements Listener {
 
     private void reloadConfigFile() {
 
-        getConfig().options().copyDefaults(true);
-        saveConfig();
+        File file = new File(getDataFolder(), "config.yml");
+        if ( !file.exists() ) {
+            getConfig().options().copyDefaults(true);
+            saveConfig();
+        }
+
         reloadConfig();
         FileConfiguration config = getConfig();
 
